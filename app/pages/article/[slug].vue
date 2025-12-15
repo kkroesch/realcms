@@ -14,11 +14,27 @@ const toSlug = (str: string) =>
 const article = computed(() => {
     if (!publications.value) return null;
     return publications.value.find((doc) => {
-        if (String(doc.documentId) === slugOrId) return true;
+        // FIX: Check ID im systemdata Objekt
+        if (String(doc.systemdata.documentId) === slugOrId) return true;
+
+        // Check Slug
         const docSlug = toSlug(doc.metadata.title);
         return docSlug === slugOrId || docSlug.startsWith(slugOrId);
     });
 });
+
+const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return "";
+    try {
+        return new Date(dateString).toLocaleDateString("de-CH", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+        });
+    } catch (e) {
+        return "";
+    }
+};
 </script>
 
 <template>
@@ -35,18 +51,26 @@ const article = computed(() => {
             </NuxtLink>
 
             <header class="mb-8 border-b pb-6">
+                <span
+                    class="inline-block bg-gray-100 text-gray-600 text-xs font-bold px-2 py-1 rounded mb-3 uppercase tracking-wider"
+                >
+                    {{ article.systemdata.contentType }}
+                </span>
+
                 <h1
                     class="text-4xl sm:text-5xl font-extrabold text-gray-900 tracking-tight mb-4"
                 >
                     {{ article.metadata.title }}
                 </h1>
-                <div class="text-gray-500 text-sm flex gap-4">
+
+                <div class="text-gray-500 text-sm flex gap-4 items-center">
                     <span>{{
-                        new Date(
-                            article.metadata.visiblePublicationDate,
-                        ).toLocaleDateString("de-CH")
+                        formatDate(article.systemdata.visiblePublicationDate)
                     }}</span>
-                    <span>ID: {{ article.documentId }}</span>
+                    <span class="text-gray-300">|</span>
+                    <span class="font-mono text-xs text-gray-400"
+                        >ID: {{ article.systemdata.documentId }}</span
+                    >
                 </div>
             </header>
 
@@ -63,8 +87,11 @@ const article = computed(() => {
             <h2 class="text-2xl font-bold text-gray-700">
                 Artikel nicht gefunden
             </h2>
-            <NuxtLink to="/" class="text-blue-600 mt-4 block"
-                >Zurück Home</NuxtLink
+            <p class="text-gray-500 mt-2">
+                Gesuchter Slug/ID: "{{ slugOrId }}"
+            </p>
+            <NuxtLink to="/" class="text-blue-600 mt-4 block hover:underline"
+                >Zurück zur Startseite</NuxtLink
             >
         </div>
     </div>
